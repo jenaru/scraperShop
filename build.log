@@ -1,0 +1,2 @@
+time="2025-08-19T16:07:23Z" level=warning msg="/app/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion"
+ db Pulling

@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  # --- Servicio de Base de Datos (PostgreSQL) ---
+  db:
+    image: postgres:15-alpine
+    container_name: boardgames_db
+    environment:
+      # Estas variables deben coincidir con las usadas en la URL de la BD del backend
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: boardgames
+    volumes:
+      # Monta un volumen para persistir los datos de la base de datos
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      # Expone el puerto de PostgreSQL al host (opcional, útil para debugging)
+      - "5432:5432"
+    networks:
+      - app-network
+
+  # --- Servicio del Backend (FastAPI) ---
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: boardgames_backend
+    depends_on:
+      - db # Asegura que la base de datos se inicie antes que el backend
+    ports:
+      # Mapea el puerto 8000 del contenedor al 8000 del host
+      - "8000:8000"
+    environment:
+      # La URL de la base de datos apunta al servicio 'db' en la red de Docker
+      DATABASE_URL: "postgresql://user:password@db:5432/boardgames"
+    networks:
+      - app-network
+
+  # --- Servicio del Frontend (React + Nginx) ---
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: boardgames_frontend
+    depends_on:
+      - backend # Asegura que el backend esté disponible
+    ports:
+      # Mapea el puerto 80 del contenedor (Nginx) al 5173 del host
+      - "5173:80"
+    networks:
+      - app-network
+
+# --- Red y Volúmenes ---
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
